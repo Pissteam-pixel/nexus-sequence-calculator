@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS — Calculator & Journal</title>
+    <style>
+        /******************************************************
+         * RESET & VARIABLES
+         ******************************************************/
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg0:#06090f;--bg1:#0c1120;--bg2:#131c31;--bg3:#1a2540;
+            --bg4:#213054;--border:#243050;--border2:#2e4070;
+            --t1:#e8ecf4;--t2:#9aa8c7;--t3:#637394;
+            --blue:#3b82f6;--cyan:#06b6d4;--green:#10b981;
+            --emerald:#34d399;--yellow:#eab308;--gold:#f59e0b;
+            --orange:#f97316;--red:#ef4444;--rose:#fb7185;
+            --purple:#8b5cf6;--indigo:#6366f1;
+            --r:10px;--r2:14px;--r3:20px;
+        }
+        html{scroll-behavior:smooth}
+        body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+            background:var(--bg0);color:var(--t1);min-height:100vh;line-height:1.55;
+            overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;
+            background:radial-gradient(ellipse at 15% 50%,rgba(59,130,246,.03),transparent 60%),
+            radial-gradient(ellipse at 85% 20%,rgba(139,92,246,.03),transparent 55%);
+            pointer-events:none;z-index:0}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:var(--bg0)}
+        ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+        /******************************************************
+         * HEADER
+         ******************************************************/
+        .header{background:rgba(12,17,32,.92);border-bottom:1px solid var(--border);
+            padding:0;position:sticky;top:0;z-index:200;backdrop-filter:blur(18px)}
+        .header-inner{max-width:1440px;margin:0 auto;padding:0 20px;
+            display:flex;align-items:stretch;gap:0}
+        .logo{display:flex;align-items:center;gap:10px;padding:14px 24px 14px 0;
+            border-right:1px solid var(--border)}
+        .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--yellow));
+            border-radius:8px;display:flex;align-items:center;justify-content:center;
+            font-size:18px;box-shadow:0 0 18px rgba(245,158,11,.18)}
+        .logo h1{font-size:1rem;font-weight:700;
+            background:linear-gradient(135deg,var(--gold),var(--yellow));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            background-clip:text;letter-spacing:-.3px}
+        .logo span{display:block;font-size:.62rem;color:var(--t3);
+            text-transform:uppercase;letter-spacing:2px;
+            -webkit-text-fill-color:var(--t3)}
+
+        /* Tabs */
+        .nav-tabs{display:flex;align-items:stretch;gap:0;margin-left:8px}
+        .nav-tab{padding:18px 28px;font-size:.78rem;font-weight:600;
+            text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);
+            cursor:pointer;border:none;background:transparent;
+            border-bottom:2px solid transparent;transition:all .2s;
+            display:flex;align-items:center;gap:8px}
+        .nav-tab:hover{color:var(--t2);background:rgba(59,130,246,.04)}
+        .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);
+            background:rgba(59,130,246,.06)}
+        .nav-tab .badge{background:var(--blue);color:#fff;font-size:.6rem;
+            padding:2px 7px;border-radius:10px;font-weight:700}
+
+        .header-right{margin-left:auto;display:flex;align-items:center;gap:12px;padding:0 4px}
+        .clock{font-size:.75rem;color:var(--t3);font-variant-numeric:tabular-nums}
+
+        /******************************************************
+         * PAGE CONTAINER
+         ******************************************************/
+        .page{display:none;max-width:1440px;margin:0 auto;padding:20px;
+            position:relative;z-index:1}
+        .page.active{display:block}
+
+        /******************************************************
+         * SHARED CARD
+         ******************************************************/
+        .card{background:var(--bg2);border:1px solid var(--border);
+            border-radius:var(--r2);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+        .card-hd{padding:14px 20px;border-bottom:1px solid var(--border);
+            display:flex;align-items:center;gap:8px}
+        .card-hd .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .card-hd h2{font-size:.72rem;font-weight:600;text-transform:uppercase;
+            letter-spacing:1.5px;color:var(--t3)}
+        .card-hd .card-actions{margin-left:auto;display:flex;gap:6px}
+        .card-bd{padding:20px}
+
+        /******************************************************
+         * FORMS
+         ******************************************************/
+        .fg{margin-bottom:14px}
+        .fg:last-child{margin-bottom:0}
+        .fg label{display:flex;align-items:center;justify-content:space-between;
+            font-size:.72rem;font-weight:500;color:var(--t3);margin-bottom:5px;
+            text-transform:uppercase;letter-spacing:.5px}
+        .fg label .h{font-size:.65rem;color:var(--t3);text-transform:none;letter-spacing:0;opacity:.7}
+        .iw{position:relative}
+        .iw .pre,.iw .suf{position:absolute;top:50%;transform:translateY(-50%);
+            color:var(--t3);font-size:.82rem;pointer-events:none;z-index:2}
+        .iw .pre{left:12px}.iw .suf{right:12px;font-size:.72rem}
+        input[type=number],input[type=text],input[type=date],input[type=time],
+        select,textarea{
+            width:100%;padding:10px 14px;background:var(--bg1);border:1px solid var(--border);
+            border-radius:8px;color:var(--t1);font-size:.92rem;font-weight:500;
+            transition:border .2s;outline:none;font-family:inherit}
+        input:focus,select:focus,textarea:focus{border-color:var(--blue);
+            box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+        .has-pre input{padding-left:30px}
+        .has-suf input{padding-right:45px}
+        select{cursor:pointer;appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23637394' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+        textarea{resize:vertical;min-height:60px;font-size:.82rem;line-height:1.5}
+        input[type=number]::-webkit-inner-spin-button{height:28px;opacity:1}
+
+        /* Toggle group */
+        .tg{display:flex;background:var(--bg1);border:1px solid var(--border);
+            border-radius:8px;overflow:hidden}
+        .tg button{flex:1;padding:9px 10px;text-align:center;font-size:.72rem;
+            font-weight:600;cursor:pointer;transition:all .2s;color:var(--t3);
+            border:none;background:transparent;text-transform:uppercase;letter-spacing:.5px}
+        .tg button.on{background:var(--blue);color:#fff}
+        .tg button:hover:not(.on){background:rgba(59,130,246,.08);color:var(--t2)}
+
+        /******************************************************
+         * BUTTONS
+         ******************************************************/
+        .btn{padding:10px 20px;border:none;border-radius:8px;font-size:.82rem;
+            font-weight:600;cursor:pointer;transition:all .2s;
+            display:inline-flex;align-items:center;gap:6px;letter-spacing:.5px}
+        .btn:hover{transform:translateY(-1px)}
+        .btn:active{transform:translateY(0)}
+        .btn-primary{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;
+            box-shadow:0 4px 15px rgba(59,130,246,.2)}
+        .btn-primary:hover{box-shadow:0 6px 25px rgba(59,130,246,.3)}
+        .btn-green{background:linear-gradient(135deg,var(--green),var(--emerald));color:#fff}
+        .btn-red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.15)}
+        .btn-ghost{background:rgba(148,168,199,.06);color:var(--t2);border:1px solid var(--border)}
+        .btn-gold{background:linear-gradient(135deg,var(--gold),var(--yellow));color:#000;font-weight:700}
+        .btn-sm{padding:6px 12px;font-size:.72rem}
+        .btn-block{width:100%;justify-content:center;padding:14px;font-size:.9rem;
+            text-transform:uppercase;letter-spacing:2px}
+
+        /******************************************************
+         * CALCULATOR GRID
+         ******************************************************/
+        .calc-grid{display:grid;grid-template-columns:370px 1fr;gap:20px;align-items:start}
+        @media(max-width:1024px){.calc-grid{grid-template-columns:1fr}}
+
+        .divider{height:1px;background:var(--border);margin:16px 0}
+        .divider-label{display:flex;align-items:center;gap:10px;margin:18px 0 12px;
+            color:var(--t3);font-size:.65rem;text-transform:uppercase;letter-spacing:2px}
+        .divider-label::before,.divider-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+        /* Quote bar */
+        .quote{background:linear-gradient(135deg,rgba(139,92,246,.06),rgba(59,130,246,.06));
+            border:1px solid rgba(139,92,246,.12);border-radius:var(--r);
+            padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;
+            gap:12px;font-size:.82rem;color:var(--t2)}
+        .quote strong{color:var(--purple)}
+
+        /* Summary cards */
+        .sum-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px}
+        .sum-card{background:var(--bg2);border:1px solid var(--border);
+            border-radius:var(--r);padding:16px;text-align:center;transition:all .25s}
+        .sum-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+        .sum-card .sl{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;
+            color:var(--t3);margin-bottom:6px}
+        .sum-card .sv{font-size:1.45rem;font-weight:700;letter-spacing:-.5px}
+        .sum-card .ss{font-size:.7rem;color:var(--t3);margin-top:3px}
+        .sum-card.sc-green{border-color:rgba(16,185,129,.15)}.sum-card.sc-green .sv{color:var(--green)}
+        .sum-card.sc-red{border-color:rgba(239,68,68,.15)}.sum-card.sc-red .sv{color:var(--red)}
+        .sum-card.sc-blue{border-color:rgba(59,130,246,.15)}.sum-card.sc-blue .sv{color:var(--blue)}
+        .sum-card.sc-gold{border-color:rgba(245,158,11,.15)}.sum-card.sc-gold .sv{color:var(--gold)}
+        .sum-card.sc-purple{border-color:rgba(139,92,246,.15)}.sum-card.sc-purple .sv{color:var(--purple)}
+        .sum-card.sc-cyan{border-color:rgba(6,182,212,.15)}.sum-card.sc-cyan .sv{color:var(--cyan)}
+
+        /* Sequence table */
+        .seq-table{width:100%;border-collapse:separate;border-spacing:0}
+        .seq-table thead th{background:rgba(59,130,246,.04);padding:10px 14px;
+            font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;
+            color:var(--t3);font-weight:600;text-align:left;border-bottom:1px solid var(--border)}
+        .seq-table tbody td{padding:12px 14px;font-size:.85rem;
+            border-bottom:1px solid rgba(36,48,80,.4)}
+        .seq-table tbody tr:hover{background:rgba(59,130,246,.02)}
+        .entry-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+            border-radius:5px;font-size:.7rem;font-weight:600}
+        .entry-tag.scout{background:rgba(59,130,246,.1);color:var(--blue)}
+        .entry-tag.conf{background:rgba(139,92,246,.1);color:var(--purple)}
+        .entry-tag.conv{background:rgba(245,158,11,.1);color:var(--gold)}
+        .lot-hl{font-weight:700;font-size:1rem}
+
+        /* Scenarios */
+        .scen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+        .scen{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+            padding:18px;transition:all .25s}
+        .scen:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+        .scen-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+        .scen-title{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+        .scen-badge{padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:600}
+        .scen-val{font-size:1.6rem;font-weight:800;margin-bottom:3px;letter-spacing:-1px}
+        .scen-detail{font-size:.73rem;color:var(--t3);line-height:1.6}
+        .scen-detail span{color:var(--t2)}
+        .scen.win{border-color:rgba(16,185,129,.12)}
+        .scen.win .scen-title,.scen.win .scen-val{color:var(--green)}
+        .scen.win .scen-badge{background:rgba(16,185,129,.1);color:var(--green)}
+        .scen.big{border-color:rgba(6,182,212,.12)}
+        .scen.big .scen-title,.scen.big .scen-val{color:var(--cyan)}
+        .scen.big .scen-badge{background:rgba(6,182,212,.1);color:var(--cyan)}
+        .scen.mega{border-color:rgba(245,158,11,.12)}
+        .scen.mega .scen-title,.scen.mega .scen-val{color:var(--gold)}
+        .scen.mega .scen-badge{background:rgba(245,158,11,.1);color:var(--gold)}
+        .scen.loss{border-color:rgba(239,68,68,.12)}
+        .scen.loss .scen-title,.scen.loss .scen-val{color:var(--red)}
+        .scen.loss .scen-badge{background:rgba(239,68,68,.1);color:var(--red)}
+
+        /* TP levels */
+        .lv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+        .lv{background:var(--bg1);border:1px solid var(--border);border-radius:8px;
+            padding:12px;text-align:center}
+        .lv .ll{font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;
+            color:var(--t3);margin-bottom:5px}
+        .lv .lval{font-size:1.1rem;font-weight:700}
+        .lv .lsub{font-size:.68rem;color:var(--t3);margin-top:2px}
+        .lv.sl .lval{color:var(--red)}.lv.tp1 .lval{color:var(--green)}
+        .lv.tp2 .lval{color:var(--cyan)}.lv.tp3 .lval{color:var(--gold)}
+
+        /* Reminder box */
+        .reminder{background:linear-gradient(135deg,rgba(239,68,68,.04),rgba(249,115,22,.04));
+            border:1px solid rgba(239,68,68,.1);border-radius:var(--r);padding:18px 22px}
+        .reminder h3{color:var(--orange);font-size:.75rem;text-transform:uppercase;
+            letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+        .reminder ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+        .reminder li{font-size:.78rem;color:var(--t2);display:flex;align-items:flex-start;
+            gap:7px;line-height:1.5}
+        .reminder li::before{content:'⚡';flex-shrink:0}
+
+        /******************************************************
+         * JOURNAL PAGE
+         ******************************************************/
+        .j-grid{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start}
+        @media(max-width:1100px){.j-grid{grid-template-columns:1fr}}
+
+        /* Stats row */
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+        .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+            padding:14px;text-align:center}
+        .stat .st-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;
+            color:var(--t3);margin-bottom:5px}
+        .stat .st-val{font-size:1.3rem;font-weight:700}
+        .stat .st-sub{font-size:.68rem;color:var(--t3);margin-top:2px}
+
+        /* Journal quick-entry form */
+        .j-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        @media(max-width:500px){.j-form .form-row{grid-template-columns:1fr}}
+
+        /* Outcome radio */
+        .outcome-row{display:flex;gap:8px;flex-wrap:wrap}
+        .outcome-opt{flex:1;min-width:80px}
+        .outcome-opt input{display:none}
+        .outcome-opt label{display:block;padding:10px 8px;text-align:center;
+            border-radius:8px;border:1px solid var(--border);background:var(--bg1);
+            cursor:pointer;font-size:.75rem;font-weight:600;transition:all .2s;
+            text-transform:uppercase;letter-spacing:.5px}
+        .outcome-opt input:checked+label.oc-win{background:rgba(16,185,129,.12);
+            border-color:var(--green);color:var(--green)}
+        .outcome-opt input:checked+label.oc-loss{background:rgba(239,68,68,.12);
+            border-color:var(--red);color:var(--red)}
+        .outcome-opt input:checked+label.oc-be{background:rgba(234,179,8,.12);
+            border-color:var(--yellow);color:var(--yellow)}
+
+        /* Journal table */
+        .j-table-wrap{overflow-x:auto}
+        .j-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px}
+        .j-table thead th{background:rgba(59,130,246,.04);padding:10px 12px;
+            font-size:.62rem;text-transform:uppercase;letter-spacing:1.2px;
+            color:var(--t3);font-weight:600;text-align:left;
+            border-bottom:1px solid var(--border);white-space:nowrap}
+        .j-table tbody td{padding:10px 12px;font-size:.82rem;
+            border-bottom:1px solid rgba(36,48,80,.35);white-space:nowrap}
+        .j-table tbody tr:hover{background:rgba(59,130,246,.02)}
+        .j-table .win-cell{color:var(--green);font-weight:600}
+        .j-table .loss-cell{color:var(--red);font-weight:600}
+        .j-table .be-cell{color:var(--yellow);font-weight:600}
+        .j-table .notes-cell{max-width:200px;white-space:normal;font-size:.75rem;color:var(--t2)}
+        .j-table .del-btn{background:none;border:none;color:var(--t3);cursor:pointer;
+            font-size:.85rem;padding:4px;border-radius:4px;transition:all .15s}
+        .j-table .del-btn:hover{color:var(--red);background:rgba(239,68,68,.08)}
+
+        /* Empty state */
+        .empty-state{text-align:center;padding:60px 20px;color:var(--t3)}
+        .empty-state .empty-icon{font-size:3rem;margin-bottom:16px;opacity:.5}
+        .empty-state p{font-size:.85rem;margin-bottom:6px}
+
+        /* Equity chart (simple bar) */
+        .equity-chart{display:flex;align-items:flex-end;gap:3px;height:120px;
+            padding:10px 0;overflow-x:auto}
+        .eq-bar{min-width:18px;flex:1;border-radius:4px 4px 0 0;transition:height .4s;
+            position:relative;cursor:pointer}
+        .eq-bar.pos{background:linear-gradient(180deg,var(--green),rgba(16,185,129,.4))}
+        .eq-bar.neg{background:linear-gradient(180deg,var(--red),rgba(239,68,68,.4))}
+        .eq-bar:hover::after{content:attr(data-val);position:absolute;bottom:calc(100% + 4px);
+            left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--t1);
+            padding:3px 8px;border-radius:5px;font-size:.65rem;white-space:nowrap;
+            box-shadow:0 2px 8px rgba(0,0,0,.4)}
+
+        /* Performance bars */
+        .perf-bar-wrap{margin-bottom:10px}
+        .perf-bar-label{display:flex;justify-content:space-between;font-size:.72rem;
+            color:var(--t3);margin-bottom:4px}
+        .perf-bar-track{height:10px;background:var(--bg1);border-radius:5px;overflow:hidden}
+        .perf-bar-fill{height:100%;border-radius:5px;transition:width .6s}
+
+        /* Streak */
+        .streak-dots{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+        .streak-dot{width:14px;height:14px;border-radius:3px}
+        .streak-dot.w{background:var(--green)}.streak-dot.l{background:var(--red)}
+        .streak-dot.b{background:var(--yellow)}
+
+        /******************************************************
+         * MODAL
+         ******************************************************/
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+            z-index:500;align-items:center;justify-content:center;padding:20px;
+            backdrop-filter:blur(4px)}
+        .modal-overlay.show{display:flex}
+        .modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);
+            max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+        .modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);
+            display:flex;align-items:center;justify-content:space-between}
+        .modal-hd h3{font-size:.9rem;font-weight:600}
+        .modal-close{background:none;border:none;color:var(--t3);font-size:1.2rem;
+            cursor:pointer;padding:4px 8px;border-radius:6px}
+        .modal-close:hover{background:rgba(239,68,68,.08);color:var(--red)}
+        .modal-bd{padding:20px}
+
+        /******************************************************
+         * RESPONSIVE
+         ******************************************************/
+        @media(max-width:768px){
+            .header-inner{flex-wrap:wrap}
+            .logo{border:none;padding:12px 0}
+            .nav-tabs{width:100%;border-top:1px solid var(--border)}
+            .nav-tab{flex:1;justify-content:center;padding:12px 8px;font-size:.68rem}
+            .header-right{display:none}
+            .card-bd{padding:14px}
+            .sum-row,.stats-row{grid-template-columns:repeat(2,1fr)}
+            .scen-grid{grid-template-columns:1fr}
+            .lv-grid{grid-template-columns:repeat(2,1fr)}
+        }
+        @media(max-width:480px){
+            .sum-row,.stats-row{grid-template-columns:1fr}
+        }
+
+        /* Animations */
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .anim{animation:fadeUp .35s ease forwards}
+
+        /* Toast */
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+            background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+            padding:12px 24px;font-size:.82rem;color:var(--t1);box-shadow:0 8px 30px rgba(0,0,0,.4);
+            z-index:600;display:none;align-items:center;gap:8px}
+        .toast.show{display:flex;animation:fadeUp .3s ease}
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HEADER WITH TABS
+     ═══════════════════════════════════════════════════ -->
+<header class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">⚡</div>
+            <div>
+                <h1>NEXUS SEQUENCE</h1>
+                <span>Calculator & Journal</span>
+            </div>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showPage('calc',this)">🧮 Calculator</button>
+            <button class="nav-tab" onclick="showPage('journal',this)">
+                📓 Journal <span class="badge" id="jCount">0</span>
+            </button>
+            <button class="nav-tab" onclick="showPage('analytics',this)">📊 Analytics</button>
+        </div>
+        <div class="header-right">
+            <span class="clock" id="clock"></span>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 1: CALCULATOR
+     ═══════════════════════════════════════════════════ -->
+<div class="page active" id="page-calc">
+    <div class="quote">
+        <span style="font-size:1.3rem;flex-shrink:0">🧠</span>
+        <span><strong>Remember:</strong> The stop being hit is <strong>CONFIRMATION</strong>, not failure. Budget the sequence, not the trade.</span>
+    </div>
+    <div class="calc-grid">
+        <!-- LEFT: INPUTS -->
+        <div>
+            <!-- Account Card -->
+            <div class="card" style="margin-bottom:18px">
+                <div class="card-hd"><span class="dot" style="background:var(--blue)"></span><h2>Account & Instrument</h2></div>
+                <div class="card-bd">
+                    <div class="fg"><label>Account Balance</label>
+                        <div class="iw has-pre"><span class="pre">$</span>
+                        <input type="number" id="cBal" value="10000" min="100" step="100"></div></div>
+                    <div class="fg"><label>Currency</label>
+                        <select id="cCur"><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option><option value="NGN">NGN (₦)</option></select></div>
+                    <div class="fg"><label>Instrument</label>
+                        <div class="tg" id="cInstr">
+                            <button class="on" data-v="XAUUSD" onclick="setInstr(this)">🥇 Gold</button>
+                            <button data-v="FOREX" onclick="setInstr(this)">💱 Forex</button>
+                            <button data-v="CUSTOM" onclick="setInstr(this)">⚙️ Custom</button>
+                        </div></div>
+                    <div class="fg"><label>Pip Value / Lot <span class="h">$ per pip</span></label>
+                        <div class="iw has-pre"><span class="pre">$</span>
+                        <input type="number" id="cPipVal" value="10" min="0.01" step="0.01"></div></div>
+                </div>
+            </div>
+
+            <!-- Sequence Config Card -->
+            <div class="card" style="margin-bottom:18px">
+                <div class="card-hd"><span class="dot" style="background:var(--purple)"></span><h2>Sequence Configuration</h2></div>
+                <div class="card-bd">
+                    <div class="fg"><label>Sequence Budget <span class="h">Max risk entire seq</span></label>
+                        <div class="iw has-suf"><input type="number" id="cBudget" value="2" min="0.5" max="5" step="0.25"><span class="suf">%</span></div></div>
+                    <div class="divider-label">Inverse Pyramid Split</div>
+                    <div class="fg"><label>🔵 Entry 1 — Scout</label>
+                        <div class="iw has-suf"><input type="number" id="cE1" value="20" min="5" max="60" step="5"><span class="suf">%</span></div></div>
+                    <div class="fg"><label>🟣 Entry 2 — Confirmed</label>
+                        <div class="iw has-suf"><input type="number" id="cE2" value="30" min="5" max="60" step="5"><span class="suf">%</span></div></div>
+                    <div class="fg"><label>🟡 Entry 3 — Conviction</label>
+                        <div class="iw has-suf"><input type="number" id="cE3" value="50" min="5" max="80" step="5"><span class="suf">%</span></div></div>
+                    <div id="allocWarn" style="display:none;color:var(--red);font-size:.75rem;padding:6px 10px;background:rgba(239,68,68,.06);border-radius:6px;margin-top:4px">⚠️ Must total 100%</div>
+                    <div class="divider"></div>
+                    <div class="fg"><label>Stop Loss <span class="h">pips</span></label>
+                        <div class="iw has-suf"><input type="number" id="cSL" value="50" min="1" step="1"><span class="suf">pips</span></div></div>
+                    <div class="divider-label">Take Profit (R:R)</div>
+                    <div class="fg"><label>TP1 <span class="h">close 50%</span></label>
+                        <div class="iw has-suf"><input type="number" id="cTP1" value="10" min="1" max="50" step="0.5"><span class="suf">R</span></div></div>
+                    <div class="fg"><label>TP2 <span class="h">close 30%</span></label>
+                        <div class="iw has-suf"><input type="number" id="cTP2" value="18" min="1" max="60" step="0.5"><span class="suf">R</span></div></div>
+                    <div class="fg"><label>TP3 <span class="h">close 20% / trail</span></label>
+                        <div class="iw has-suf"><input type="number" id="cTP3" value="25" min="1" max="80" step="0.5"><span class="suf">R</span></div></div>
+                    <div class="divider"></div>
+                    <div class="fg"><label>Sequences / Week</label>
+                        <input type="number" id="cSeqWk" value="5" min="1" max="20"></div>
+                    <div class="fg"><label>Win Rate <span class="h">% of sequences</span></label>
+                        <div class="iw has-suf"><input type="number" id="cWR" value="60" min="10" max="95" step="5"><span class="suf">%</span></div></div>
+                    <button class="btn btn-primary btn-block" onclick="runCalc()" style="margin-top:10px">⚡ CALCULATE POSITION SIZES</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: RESULTS -->
+        <div id="calcResults" style="display:none">
+            <div id="calcSummary"></div>
+            <div class="card" style="margin-top:18px"><div class="card-hd"><span class="dot" style="background:var(--cyan)"></span><h2>📋 Position Sizes</h2></div><div class="card-bd" style="padding:0;overflow-x:auto"><table class="seq-table" id="calcTable"></table></div></div>
+            <div class="card" style="margin-top:18px"><div class="card-hd"><span class="dot" style="background:var(--green)"></span><h2>🎯 TP Distances</h2></div><div class="card-bd"><div class="lv-grid" id="calcLevels"></div></div></div>
+            <div class="card" style="margin-top:18px"><div class="card-hd"><span class="dot" style="background:var(--gold)"></span><h2>📊 Outcome Scenarios</h2></div><div class="card-bd"><div class="scen-grid" id="calcScenarios"></div></div></div>
+            <div class="card" style="margin-top:18px"><div class="card-hd"><span class="dot" style="background:var(--emerald)"></span><h2>📈 Weekly Projection</h2></div><div class="card-bd" id="calcProjection"></div></div>
+            <div class="reminder" style="margin-top:18px">
+                <h3>🛡️ Discipline Reminders</h3>
+                <ul>
+                    <li>The first stop-out is your <strong>SCOUT</strong> — it confirms liquidity exists.</li>
+                    <li>NEVER skip the re-entry after a sweep.</li>
+                    <li>3 entries stopped → sequence DEAD. Walk away.</li>
+                    <li>Stop trading after 2 failed sequences per day.</li>
+                    <li>Stop for the week if target hit OR down 6%.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 2: JOURNAL
+     ═══════════════════════════════════════════════════ -->
+<div class="page" id="page-journal">
+    <div class="j-grid">
+        <!-- LEFT: ENTRY FORM -->
+        <div>
+            <div class="card">
+                <div class="card-hd">
+                    <span class="dot" style="background:var(--green)"></span>
+                    <h2>📝 Log Sequence</h2>
+                    <div class="card-actions"><button class="btn btn-sm btn-ghost" onclick="resetJForm()">Clear</button></div>
+                </div>
+                <div class="card-bd j-form">
+                    <div class="form-row">
+                        <div class="fg"><label>Date</label><input type="date" id="jDate"></div>
+                        <div class="fg"><label>Time</label><input type="time" id="jTime" value="09:00"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="fg"><label>Pair / Instrument</label>
+                            <select id="jPair"><option>XAU/USD</option><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>GBP/JPY</option><option>NAS100</option><option>US30</option><option>Other</option></select></div>
+                        <div class="fg"><label>Session</label>
+                            <select id="jSession"><option>London</option><option>New York</option><option>Overlap</option><option>Asian</option><option>Off-Hours</option></select></div>
+                    </div>
+                    <div class="fg"><label>Direction</label>
+                        <div class="tg">
+                            <button class="on" data-v="LONG" onclick="setDir(this)">🟢 Long</button>
+                            <button data-v="SHORT" onclick="setDir(this)">🔴 Short</button>
+                        </div>
+                    </div>
+
+                    <div class="divider-label">Sequence Result</div>
+
+                    <div class="fg"><label>Outcome</label>
+                        <div class="outcome-row">
+                            <div class="outcome-opt"><input type="radio" name="jOutcome" id="oc-w" value="WIN" checked><label for="oc-w" class="oc-win">✅ Win</label></div>
+                            <div class="outcome-opt"><input type="radio" name="jOutcome" id="oc-l" value="LOSS"><label for="oc-l" class="oc-loss">❌ Loss</label></div>
+                            <div class="outcome-opt"><input type="radio" name="jOutcome" id="oc-b" value="BE"><label for="oc-b" class="oc-be">⏸ B/E</label></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="fg"><label>Sweeps Before Win <span class="h"># of SL hits</span></label>
+                            <select id="jSweeps"><option value="0">0 — Won Entry 1</option><option value="1">1 — Won Entry 2</option><option value="2" selected>2 — Won Entry 3</option><option value="3">3 — All Stopped</option></select></div>
+                        <div class="fg"><label>Winning Entry Hit</label>
+                            <select id="jTPHit"><option value="TP1">TP1</option><option value="TP2">TP2</option><option value="TP3">TP3</option><option value="TRAIL">Trail</option><option value="MANUAL">Manual Close</option><option value="NONE">N/A (Loss)</option></select></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="fg"><label>R Achieved <span class="h">net of sweep costs</span></label>
+                            <div class="iw has-suf"><input type="number" id="jR" value="8" step="0.5"><span class="suf">R</span></div></div>
+                        <div class="fg"><label>P&L ($) <span class="h">actual dollar result</span></label>
+                            <div class="iw has-pre"><span class="pre">$</span><input type="number" id="jPnL" value="0" step="1"></div></div>
+                    </div>
+
+                    <div class="fg"><label>Sweep Depth <span class="h">how far past SL in pips</span></label>
+                        <div class="iw has-suf"><input type="number" id="jSweepDepth" value="0" min="0" step="1"><span class="suf">pips</span></div></div>
+
+                    <div class="fg"><label>Displacement After Sweep?</label>
+                        <select id="jDisplacement"><option value="strong">Yes — Strong</option><option value="weak">Yes — Weak</option><option value="none">No displacement</option></select></div>
+
+                    <div class="fg"><label>Emotions During Trade</label>
+                        <div class="tg" id="jEmotion" style="flex-wrap:wrap">
+                            <button class="on" data-v="calm" onclick="setEmo(this)">😌 Calm</button>
+                            <button data-v="anxious" onclick="setEmo(this)">😰 Anxious</button>
+                            <button data-v="fomo" onclick="setEmo(this)">🤑 FOMO</button>
+                            <button data-v="revenge" onclick="setEmo(this)">😤 Revenge</button>
+                            <button data-v="confident" onclick="setEmo(this)">💪 Confident</button>
+                        </div>
+                    </div>
+
+                    <div class="fg"><label>Followed Rules?</label>
+                        <div class="tg">
+                            <button class="on" data-v="yes" onclick="setRules(this)">✅ Yes</button>
+                            <button data-v="partial" onclick="setRules(this)">⚠️ Partial</button>
+                            <button data-v="no" onclick="setRules(this)">❌ No</button>
+                        </div>
+                    </div>
+
+                    <div class="fg"><label>Notes <span class="h">What did you observe?</span></label>
+                        <textarea id="jNotes" rows="3" placeholder="e.g., Asian range was tight, London swept lows perfectly, displacement was clean..."></textarea></div>
+
+                    <div class="fg"><label>Screenshot URL <span class="h">optional — paste link</span></label>
+                        <input type="text" id="jScreenshot" placeholder="https://..."></div>
+
+                    <button class="btn btn-green btn-block" onclick="saveJournal()" style="margin-top:6px">💾 SAVE SEQUENCE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: TRADE HISTORY -->
+        <div>
+            <div class="card">
+                <div class="card-hd">
+                    <span class="dot" style="background:var(--cyan)"></span>
+                    <h2>📒 Trade History</h2>
+                    <div class="card-actions">
+                        <button class="btn btn-sm btn-ghost" onclick="exportCSV()">📤 Export CSV</button>
+                        <button class="btn btn-sm btn-red" onclick="confirmClearAll()">🗑️ Clear All</button>
+                    </div>
+                </div>
+                <div class="card-bd" style="padding:0">
+                    <div class="j-table-wrap" id="jTableWrap">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 3: ANALYTICS
+     ═══════════════════════════════════════════════════ -->
+<div class="page" id="page-analytics">
+    <!-- Stats row -->
+    <div class="stats-row" id="aStats"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div class="card" id="aEquityCard" style="grid-column:1/-1">
+            <div class="card-hd"><span class="dot" style="background:var(--green)"></span><h2>📈 Sequence P&L History</h2></div>
+            <div class="card-bd"><div class="equity-chart" id="aEquity"></div></div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+            <div class="card-hd"><span class="dot" style="background:var(--purple)"></span><h2>🔬 Sweep Analysis</h2></div>
+            <div class="card-bd" id="aSweep"></div>
+        </div>
+        <div class="card">
+            <div class="card-hd"><span class="dot" style="background:var(--cyan)"></span><h2>⏰ Session Performance</h2></div>
+            <div class="card-bd" id="aSession"></div>
+        </div>
+        <div class="card">
+            <div class="card-hd"><span class="dot" style="background:var(--gold)"></span><h2>🎯 TP Hit Distribution</h2></div>
+            <div class="card-bd" id="aTP"></div>
+        </div>
+        <div class="card">
+            <div class="card-hd"><span class="dot" style="background:var(--green)"></span><h2>🧠 Emotional Correlation</h2></div>
+            <div class="card-bd" id="aEmotion"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+            <div class="card-hd"><span class="dot" style="background:var(--rose)"></span><h2>📊 Rules Compliance & Streak</h2></div>
+            <div class="card-bd" id="aRules"></div>
+        </div>
+    </div>
+    @media(max-width:768px){
+        <style>.page#page-analytics>div{grid-template-columns:1fr!important}</style>
+    }
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-hd"><h3 id="modalTitle">Confirm</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <div class="modal-bd" id="modalBody"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════════
+let journal = JSON.parse(localStorage.getItem('nexus_journal') || '[]');
+let selectedDir = 'LONG';
+let selectedEmo = 'calm';
+let selectedRules = 'yes';
+
+// ══════════════════════════════════════════════
+// PAGE NAVIGATION
+// ══════════════════════════════════════════════
+function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (id === 'analytics') renderAnalytics();
+    if (id === 'journal') renderJournal();
+}
+
+// ══════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════
+function updateClock() {
+    const d = new Date();
+    const utc = d.toUTCString().slice(17, 25);
+    document.getElementById('clock').textContent = 'UTC ' + utc;
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ══════════════════════════════════════════════
+// CALCULATOR
+// ══════════════════════════════════════════════
+function setInstr(btn) {
+    btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    const v = btn.dataset.v;
+    const pv = document.getElementById('cPipVal');
+    const sl = document.getElementById('cSL');
+    if (v === 'XAUUSD') { pv.value = 10; sl.value = 50; }
+    else if (v === 'FOREX') { pv.value = 10; sl.value = 25; }
+}
+
+function runCalc() {
+    const e1p = +document.getElementById('cE1').value;
+    const e2p = +document.getElementById('cE2').value;
+    const e3p = +document.getElementById('cE3').value;
+    if (Math.abs(e1p + e2p + e3p - 100) > 0.1) {
+        document.getElementById('allocWarn').style.display = 'block';
+        document.getElementById('allocWarn').textContent = `⚠️ Total is ${e1p+e2p+e3p}% — must be 100%`;
+        return;
+    }
+    document.getElementById('allocWarn').style.display = 'none';
+
+    const bal = +document.getElementById('cBal').value;
+    const pv = +document.getElementById('cPipVal').value;
+    const budgetPct = +document.getElementById('cBudget').value;
+    const sl = +document.getElementById('cSL').value;
+    const tp1R = +document.getElementById('cTP1').value;
+    const tp2R = +document.getElementById('cTP2').value;
+    const tp3R = +document.getElementById('cTP3').value;
+    const spw = +document.getElementById('cSeqWk').value;
+    const wr = +document.getElementById('cWR').value / 100;
+    const cur = document.getElementById('cCur').value;
+    const sym = {USD:'$',EUR:'€',GBP:'£',NGN:'₦'}[cur] || '$';
+
+    const totalRisk = bal * budgetPct / 100;
+    const r1 = totalRisk * e1p / 100, r2 = totalRisk * e2p / 100, r3 = totalRisk * e3p / 100;
+    const l1 = r1 / (sl * pv), l2 = r2 / (sl * pv), l3 = r3 / (sl * pv);
+    const tp1P = sl * tp1R, tp2P = sl * tp2R, tp3P = sl * tp3R;
+
+    // Scenarios
+    const sA = { label: 'Win Entry 1 → TP1', cls: 'win', badge: 'BEST CASE', net: r1 * tp1R, cost: 0 };
+    const sB = { label: '1 Sweep → Win E2', cls: 'win', badge: 'COMMON', net: r2 * tp1R - r1, cost: r1 };
+    const sC = { label: `2 Sweeps → TP1 (${tp1R}R)`, cls: 'big', badge: `${tp1R}R`, net: r3 * tp1R - r1 - r2, cost: r1 + r2 };
+    const sD = { label: `2 Sweeps → TP2 (${tp2R}R)`, cls: 'big', badge: `${tp2R}R 🔥`, net: r3 * tp2R - r1 - r2, cost: r1 + r2 };
+    const sE = { label: `2 Sweeps → TP3 (${tp3R}R)`, cls: 'mega', badge: 'MONSTER 🎯', net: r3 * tp3R - r1 - r2, cost: r1 + r2 };
+    const sF = { label: 'Full Sequence Loss', cls: 'loss', badge: 'MAX LOSS', net: -(r1 + r2 + r3), cost: r1 + r2 + r3 };
+    const scenarios = [sA, sB, sC, sD, sE, sF];
+
+    // Weekly
+    const wins = Math.round(spw * wr), losses = spw - wins;
+    const wkCons = wins * sC.net - losses * Math.abs(sF.net);
+    const wkOpt = wins * (sC.net * .4 + sD.net * .6) - losses * Math.abs(sF.net);
+
+    // Render
+    document.getElementById('calcResults').style.display = 'block';
+
+    document.getElementById('calcSummary').innerHTML = `<div class="sum-row">
+        <div class="sum-card sc-blue anim"><div class="sl">Seq Budget</div><div class="sv">${sym}${totalRisk.toFixed(2)}</div><div class="ss">${budgetPct}% of ${sym}${bal.toLocaleString()}</div></div>
+        <div class="sum-card sc-red anim"><div class="sl">Max Loss</div><div class="sv">-${sym}${totalRisk.toFixed(2)}</div><div class="ss">If all 3 stop</div></div>
+        <div class="sum-card sc-green anim"><div class="sl">Best TP1 Win</div><div class="sv">+${sym}${sA.net.toFixed(2)}</div><div class="ss">+${(sA.net/bal*100).toFixed(1)}%</div></div>
+        <div class="sum-card sc-gold anim"><div class="sl">Monster (TP3)</div><div class="sv">+${sym}${sE.net.toFixed(2)}</div><div class="ss">+${(sE.net/bal*100).toFixed(1)}%</div></div>
+        <div class="sum-card sc-cyan anim"><div class="sl">Weekly Est.</div><div class="sv">${wkCons>=0?'+':''}${sym}${wkCons.toFixed(0)}</div><div class="ss">${(wkCons/bal*100).toFixed(1)}% conservative</div></div>
+    </div>`;
+
+    document.getElementById('calcTable').innerHTML = `<thead><tr><th>Entry</th><th>Role</th><th>Risk %</th><th>Risk ${sym}</th><th>Lot Size</th><th>SL</th></tr></thead><tbody>
+        <tr><td><span class="entry-tag scout">🔵 E1</span></td><td>Scout</td><td>${(e1p*budgetPct/100).toFixed(2)}%</td><td>${sym}${r1.toFixed(2)}</td><td class="lot-hl" style="color:var(--blue)">${l1.toFixed(2)}</td><td>${sl} pips</td></tr>
+        <tr><td><span class="entry-tag conf">🟣 E2</span></td><td>Confirmed</td><td>${(e2p*budgetPct/100).toFixed(2)}%</td><td>${sym}${r2.toFixed(2)}</td><td class="lot-hl" style="color:var(--purple)">${l2.toFixed(2)}</td><td>${sl} pips</td></tr>
+        <tr><td><span class="entry-tag conv">🟡 E3</span></td><td>Conviction</td><td>${(e3p*budgetPct/100).toFixed(2)}%</td><td>${sym}${r3.toFixed(2)}</td><td class="lot-hl" style="color:var(--gold)">${l3.toFixed(2)}</td><td>${sl} pips</td></tr>
+        <tr style="background:rgba(59,130,246,.03);font-weight:600"><td colspan="3">TOTAL</td><td>${sym}${totalRisk.toFixed(2)}</td><td>${(l1+l2+l3).toFixed(2)}</td><td></td></tr>
+    </tbody>`;
+
+    document.getElementById('calcLevels').innerHTML = `
+        <div class="lv sl"><div class="ll">Stop Loss</div><div class="lval">${sl} pips</div><div class="lsub">1R</div></div>
+        <div class="lv tp1"><div class="ll">TP1 (50%)</div><div class="lval">${tp1P.toFixed(0)} pips</div><div class="lsub">${tp1R}R</div></div>
+        <div class="lv tp2"><div class="ll">TP2 (30%)</div><div class="lval">${tp2P.toFixed(0)} pips</div><div class="lsub">${tp2R}R</div></div>
+        <div class="lv tp3"><div class="ll">TP3 (20%)</div><div class="lval">${tp3P.toFixed(0)} pips</div><div class="lsub">${tp3R}R</div></div>`;
+
+    document.getElementById('calcScenarios').innerHTML = scenarios.map(s => `
+        <div class="scen ${s.cls}"><div class="scen-top"><span class="scen-title">${s.label}</span><span class="scen-badge">${s.badge}</span></div>
+        <div class="scen-val">${s.net>=0?'+':''}${sym}${s.net.toFixed(2)}</div>
+        <div class="scen-detail"><span>${(s.net/bal*100).toFixed(2)}% of account</span></div></div>`).join('');
+
+    // Projection
+    let bC = bal, bO = bal, rows = '';
+    for (let w = 1; w <= 4; w++) {
+        bC += bC * wkCons / bal; bO += bO * wkOpt / bal;
+        rows += `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg1);border-radius:8px;margin-bottom:6px">
+            <span style="font-size:.75rem;color:var(--t3);width:60px">Week ${w}</span>
+            <span style="font-weight:600;min-width:100px">${sym}${bC.toFixed(0)}</span>
+            <span style="font-weight:600;color:var(--cyan);min-width:100px">${sym}${bO.toFixed(0)}</span>
+            <span style="margin-left:auto;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(16,185,129,.08);color:var(--green)">+${((bO-bal)/bal*100).toFixed(1)}%</span>
+        </div>`;
+    }
+    document.getElementById('calcProjection').innerHTML = `<div style="display:flex;gap:20px;margin-bottom:12px;font-size:.68rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:0 14px"><span></span><span>📊 Conservative</span><span style="color:var(--cyan)">🚀 Optimistic</span></div>${rows}`;
+
+    document.getElementById('calcResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Store for journal default
+    window._lastCalc = { l1, l2, l3, r1, r2, r3, sl, tp1R, tp2R, tp3R, sym, totalRisk, bal };
+}
+
+// Validate allocation live
+['cE1','cE2','cE3'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        const t = +document.getElementById('cE1').value + +document.getElementById('cE2').value + +document.getElementById('cE3').value;
+        const w = document.getElementById('allocWarn');
+        if (Math.abs(t-100)>.1) { w.style.display='block'; w.textContent=`⚠️ Total is ${t}% — must be 100%`; }
+        else w.style.display='none';
+    });
+});
+
+// ══════════════════════════════════════════════
+// JOURNAL HELPERS
+// ══════════════════════════════════════════════
+function setDir(btn) {
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on'); selectedDir = btn.dataset.v;
+}
+function setEmo(btn) {
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on'); selectedEmo = btn.dataset.v;
+}
+function setRules(btn) {
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on'); selectedRules = btn.dataset.v;
+}
+
+// Set today's date
+document.getElementById('jDate').value = new Date().toISOString().split('T')[0];
+
+function saveJournal() {
+    const outcome = document.querySelector('input[name=jOutcome]:checked').value;
+    const entry = {
+        id: Date.now(),
+        date: document.getElementById('jDate').value,
+        time: document.getElementById('jTime').value,
+        pair: document.getElementById('jPair').value,
+        session: document.getElementById('jSession').value,
+        direction: selectedDir,
+        outcome,
+        sweeps: +document.getElementById('jSweeps').value,
+        tpHit: document.getElementById('jTPHit').value,
+        rAchieved: +document.getElementById('jR').value,
+        pnl: +document.getElementById('jPnL').value,
+        sweepDepth: +document.getElementById('jSweepDepth').value,
+        displacement: document.getElementById('jDisplacement').value,
+        emotion: selectedEmo,
+        rules: selectedRules,
+        notes: document.getElementById('jNotes').value,
+        screenshot: document.getElementById('jScreenshot').value
+    };
+
+    if (outcome === 'LOSS') entry.rAchieved = -Math.abs(entry.rAchieved || entry.sweeps + 1);
+    if (outcome === 'BE') entry.rAchieved = 0;
+
+    journal.unshift(entry);
+    saveData();
+    renderJournal();
+    updateCount();
+    toast('✅ Sequence saved!');
+    resetJForm();
+}
+
+function resetJForm() {
+    document.getElementById('jDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('jTime').value = '09:00';
+    document.getElementById('jR').value = '8';
+    document.getElementById('jPnL').value = '0';
+    document.getElementById('jSweepDepth').value = '0';
+    document.getElementById('jNotes').value = '';
+    document.getElementById('jScreenshot').value = '';
+    document.getElementById('oc-w').checked = true;
+    document.getElementById('jSweeps').value = '2';
+    document.getElementById('jTPHit').value = 'TP1';
+}
+
+function saveData() {
+    localStorage.setItem('nexus_journal', JSON.stringify(journal));
+}
+
+function updateCount() {
+    document.getElementById('jCount').textContent = journal.length;
+}
+
+function deleteEntry(id) {
+    journal = journal.filter(e => e.id !== id);
+    saveData(); renderJournal(); updateCount();
+    toast('🗑️ Entry deleted');
+}
+
+function confirmClearAll() {
+    document.getElementById('modalTitle').textContent = '⚠️ Clear All Data?';
+    document.getElementById('modalBody').innerHTML = `
+        <p style="color:var(--t2);margin-bottom:16px">This will permanently delete all ${journal.length} journal entries. This cannot be undone.</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-red" onclick="clearAll()">🗑️ Delete Everything</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function clearAll() {
+    journal = []; saveData(); renderJournal(); updateCount(); closeModal();
+    toast('All data cleared');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+// ══════════════════════════════════════════════
+// RENDER JOURNAL TABLE
+// ══════════════════════════════════════════════
+function renderJournal() {
+    updateCount();
+    const wrap = document.getElementById('jTableWrap');
+    if (journal.length === 0) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📓</div><p>No sequences logged yet.</p><p style="font-size:.75rem">Use the form on the left to record your first sequence.</p></div>`;
+        return;
+    }
+
+    let html = `<table class="j-table"><thead><tr>
+        <th>Date</th><th>Pair</th><th>Dir</th><th>Session</th><th>Sweeps</th>
+        <th>Result</th><th>R</th><th>P&L</th><th>TP Hit</th><th>Emotion</th><th>Rules</th><th>Notes</th><th></th>
+    </tr></thead><tbody>`;
+
+    journal.forEach(e => {
+        const ocCls = e.outcome === 'WIN' ? 'win-cell' : e.outcome === 'LOSS' ? 'loss-cell' : 'be-cell';
+        const ocIcon = e.outcome === 'WIN' ? '✅' : e.outcome === 'LOSS' ? '❌' : '⏸';
+        const dirIcon = e.direction === 'LONG' ? '🟢' : '🔴';
+        const emoMap = {calm:'😌',anxious:'😰',fomo:'🤑',revenge:'😤',confident:'💪'};
+        const rulesMap = {yes:'✅',partial:'⚠️',no:'❌'};
+
+        html += `<tr>
+            <td>${e.date}<br><span style="font-size:.7rem;color:var(--t3)">${e.time||''}</span></td>
+            <td style="font-weight:600">${e.pair}</td>
+            <td>${dirIcon}</td>
+            <td style="font-size:.75rem">${e.session}</td>
+            <td style="text-align:center;font-weight:600">${e.sweeps}</td>
+            <td class="${ocCls}">${ocIcon} ${e.outcome}</td>
+            <td class="${ocCls}" style="font-size:.95rem">${e.rAchieved > 0 ? '+' : ''}${e.rAchieved}R</td>
+            <td class="${e.pnl >= 0 ? 'win-cell' : 'loss-cell'}">${e.pnl >= 0 ? '+' : ''}$${e.pnl}</td>
+            <td style="font-size:.75rem">${e.tpHit}</td>
+            <td>${emoMap[e.emotion]||'😌'}</td>
+            <td>${rulesMap[e.rules]||'✅'}</td>
+            <td class="notes-cell">${(e.notes||'').substring(0,60)}${(e.notes||'').length>60?'...':''}</td>
+            <td><button class="del-btn" onclick="deleteEntry(${e.id})">✕</button></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════
+function exportCSV() {
+    if (journal.length === 0) { toast('No data to export'); return; }
+    const headers = ['Date','Time','Pair','Session','Direction','Outcome','Sweeps','TP_Hit','R_Achieved','PnL','Sweep_Depth','Displacement','Emotion','Rules','Notes'];
+    const rows = journal.map(e => [e.date,e.time,e.pair,e.session,e.direction,e.outcome,e.sweeps,e.tpHit,e.rAchieved,e.pnl,e.sweepDepth,e.displacement,e.emotion,e.rules,`"${(e.notes||'').replace(/"/g,'""')}"`]);
+    const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `nexus_journal_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast('📤 CSV exported!');
+}
+
+// ══════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════
+function renderAnalytics() {
+    const data = journal;
+    if (data.length === 0) {
+        document.getElementById('aStats').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📊</div><p>No data yet. Log sequences in the Journal tab first.</p></div>';
+        ['aEquity','aSweep','aSession','aTP','aEmotion','aRules'].forEach(id => document.getElementById(id).innerHTML = '');
+        return;
+    }
+
+    const wins = data.filter(e=>e.outcome==='WIN');
+    const losses = data.filter(e=>e.outcome==='LOSS');
+    const totalR = data.reduce((s,e)=>s+e.rAchieved,0);
+    const totalPnL = data.reduce((s,e)=>s+e.pnl,0);
+    const winRate = data.length>0 ? (wins.length/data.length*100) : 0;
+    const avgR = data.length>0 ? totalR/data.length : 0;
+    const avgWinR = wins.length>0 ? wins.reduce((s,e)=>s+e.rAchieved,0)/wins.length : 0;
+    const avgLossR = losses.length>0 ? losses.reduce((s,e)=>s+Math.abs(e.rAchieved),0)/losses.length : 0;
+    const expectancy = data.length>0 ? (winRate/100*avgWinR - (1-winRate/100)*avgLossR) : 0;
+    const avgSweeps = data.length>0 ? data.reduce((s,e)=>s+e.sweeps,0)/data.length : 0;
+
+    // Best & worst
+    const bestR = data.reduce((m,e)=>Math.max(m,e.rAchieved),-Infinity);
+    const worstR = data.reduce((m,e)=>Math.min(m,e.rAchieved),Infinity);
+
+    // Streak
+    let curStreak=0, maxWinStreak=0, maxLossStreak=0, tempStreak=0, lastType='';
+    data.slice().reverse().forEach(e=>{
+        if(e.outcome===lastType||lastType===''){
+            tempStreak++;
+        }else{
+            if(lastType==='WIN') maxWinStreak=Math.max(maxWinStreak,tempStreak);
+            if(lastType==='LOSS') maxLossStreak=Math.max(maxLossStreak,tempStreak);
+            tempStreak=1;
+        }
+        lastType=e.outcome;
+    });
+    if(lastType==='WIN') maxWinStreak=Math.max(maxWinStreak,tempStreak);
+    if(lastType==='LOSS') maxLossStreak=Math.max(maxLossStreak,tempStreak);
+
+    // Rules compliance
+    const rulesYes = data.filter(e=>e.rules==='yes').length;
+    const rulesCompliance = data.length>0 ? rulesYes/data.length*100 : 0;
+
+    // Stats row
+    document.getElementById('aStats').innerHTML = `
+        <div class="stat"><div class="st-label">Total Sequences</div><div class="st-val" style="color:var(--blue)">${data.length}</div></div>
+        <div class="stat"><div class="st-label">Win Rate</div><div class="st-val" style="color:${winRate>=50?'var(--green)':'var(--red)'}">${winRate.toFixed(1)}%</div><div class="st-sub">${wins.length}W / ${losses.length}L</div></div>
+        <div class="stat"><div class="st-label">Total R</div><div class="st-val" style="color:${totalR>=0?'var(--green)':'var(--red)'}">${totalR>=0?'+':''}${totalR.toFixed(1)}R</div></div>
+        <div class="stat"><div class="st-label">Total P&L</div><div class="st-val" style="color:${totalPnL>=0?'var(--green)':'var(--red)'}">${totalPnL>=0?'+':''}$${totalPnL.toFixed(0)}</div></div>
+        <div class="stat"><div class="st-label">Avg R/Seq</div><div class="st-val" style="color:${avgR>=0?'var(--green)':'var(--red)'}">${avgR>=0?'+':''}${avgR.toFixed(1)}R</div></div>
+        <div class="stat"><div class="st-label">Expectancy</div><div class="st-val" style="color:${expectancy>=0?'var(--green)':'var(--red)'}">${expectancy>=0?'+':''}${expectancy.toFixed(2)}R</div></div>
+        <div class="stat"><div class="st-label">Best Trade</div><div class="st-val" style="color:var(--green)">+${bestR.toFixed(1)}R</div></div>
+        <div class="stat"><div class="st-label">Avg Sweeps</div><div class="st-val" style="color:var(--purple)">${avgSweeps.toFixed(1)}</div></div>
+        <div class="stat"><div class="st-label">Rules ✅</div><div class="st-val" style="color:${rulesCompliance>=80?'var(--green)':'var(--orange)'}">${rulesCompliance.toFixed(0)}%</div></div>
+    `;
+
+    // Equity chart (P&L bars)
+    const maxPnL = Math.max(...data.map(e=>Math.abs(e.pnl)), 1);
+    document.getElementById('aEquity').innerHTML = data.slice().reverse().map((e, i) => {
+        const h = Math.max(Math.abs(e.pnl) / maxPnL * 100, 6);
+        const cls = e.pnl >= 0 ? 'pos' : 'neg';
+        return `<div class="eq-bar ${cls}" style="height:${h}%" data-val="${e.date}: ${e.pnl>=0?'+':''}$${e.pnl} (${e.rAchieved>=0?'+':''}${e.rAchieved}R)"></div>`;
+    }).join('');
+
+    // Sweep analysis
+    const sweepCounts = [0,0,0,0]; // 0,1,2,3 sweeps
+    const sweepWins = [0,0,0,0];
+    data.forEach(e=>{
+        const s=Math.min(e.sweeps,3);
+        sweepCounts[s]++;
+        if(e.outcome==='WIN') sweepWins[s]++;
+    });
+    const avgSweepDepth = data.filter(e=>e.sweepDepth>0);
+    const avgDepth = avgSweepDepth.length>0 ? avgSweepDepth.reduce((s,e)=>s+e.sweepDepth,0)/avgSweepDepth.length : 0;
+
+    document.getElementById('aSweep').innerHTML = `
+        <div style="margin-bottom:14px;font-size:.78rem;color:var(--t2)">Average sweep depth: <strong style="color:var(--purple)">${avgDepth.toFixed(1)} pips</strong> beyond SL</div>
+        ${[0,1,2,3].map(i=>{
+            const pct = sweepCounts[i]>0 ? sweepWins[i]/sweepCounts[i]*100 : 0;
+            const labels = ['No sweeps (E1 win)','1 sweep (E2 win)','2 sweeps (E3 win)','All stopped (loss)'];
+            const colors = ['var(--green)','var(--blue)','var(--purple)','var(--red)'];
+            return `<div class="perf-bar-wrap">
+                <div class="perf-bar-label"><span>${labels[i]}</span><span>${sweepCounts[i]} trades (${pct.toFixed(0)}% WR)</span></div>
+                <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${data.length>0?sweepCounts[i]/data.length*100:0}%;background:${colors[i]}"></div></div>
+            </div>`;
+        }).join('')}`;
+
+    // Session performance
+    const sessions = ['London','New York','Overlap','Asian','Off-Hours'];
+    document.getElementById('aSession').innerHTML = sessions.map(s=>{
+        const sd = data.filter(e=>e.session===s);
+        const sw = sd.filter(e=>e.outcome==='WIN').length;
+        const wr = sd.length>0 ? sw/sd.length*100 : 0;
+        const tr = sd.reduce((a,e)=>a+e.rAchieved,0);
+        const col = wr>=60?'var(--green)':wr>=40?'var(--yellow)':'var(--red)';
+        return `<div class="perf-bar-wrap">
+            <div class="perf-bar-label"><span>${s} (${sd.length})</span><span style="color:${col}">${wr.toFixed(0)}% WR · ${tr>=0?'+':''}${tr.toFixed(1)}R</span></div>
+            <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${Math.max(wr,2)}%;background:${col}"></div></div>
+        </div>`;
+    }).join('');
+
+    // TP distribution
+    const tps = ['TP1','TP2','TP3','TRAIL','MANUAL','NONE'];
+    const tpCounts = tps.map(t=>data.filter(e=>e.tpHit===t).length);
+    const tpMax = Math.max(...tpCounts,1);
+    const tpColors = ['var(--green)','var(--cyan)','var(--gold)','var(--purple)','var(--blue)','var(--red)'];
+    document.getElementById('aTP').innerHTML = tps.map((t,i)=>`
+        <div class="perf-bar-wrap">
+            <div class="perf-bar-label"><span>${t}</span><span>${tpCounts[i]} (${data.length>0?(tpCounts[i]/data.length*100).toFixed(0):0}%)</span></div>
+            <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${tpCounts[i]/tpMax*100}%;background:${tpColors[i]}"></div></div>
+        </div>`).join('');
+
+    // Emotion correlation
+    const emos = ['calm','confident','anxious','fomo','revenge'];
+    const emoLabels = ['😌 Calm','💪 Confident','😰 Anxious','🤑 FOMO','😤 Revenge'];
+    document.getElementById('aEmotion').innerHTML = emos.map((em,i)=>{
+        const ed = data.filter(e=>e.emotion===em);
+        const ew = ed.filter(e=>e.outcome==='WIN').length;
+        const wr = ed.length>0 ? ew/ed.length*100 : 0;
+        const er = ed.reduce((a,e)=>a+e.rAchieved,0);
+        const col = wr>=60?'var(--green)':wr>=40?'var(--yellow)':'var(--red)';
+        return `<div class="perf-bar-wrap">
+            <div class="perf-bar-label"><span>${emoLabels[i]} (${ed.length})</span><span style="color:${col}">${wr.toFixed(0)}% WR · ${er>=0?'+':''}${er.toFixed(1)}R</span></div>
+            <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${Math.max(wr,2)}%;background:${col}"></div></div>
+        </div>`;
+    }).join('') + `<div style="margin-top:12px;padding:10px 14px;background:rgba(139,92,246,.05);border-radius:8px;font-size:.75rem;color:var(--t2)">
+        💡 <strong>Insight:</strong> Compare win rates when calm vs emotional. If calm trades win more, that's your signal to only trade when centered.
+    </div>`;
+
+    // Rules & streak
+    const last20 = data.slice(0, 20);
+    document.getElementById('aRules').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div>
+                <div style="font-size:.75rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rules Compliance</div>
+                <div class="perf-bar-wrap">
+                    <div class="perf-bar-label"><span>✅ Followed</span><span>${rulesYes}/${data.length}</span></div>
+                    <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${rulesCompliance}%;background:var(--green)"></div></div>
+                </div>
+                <div class="perf-bar-wrap">
+                    <div class="perf-bar-label"><span>⚠️ Partial</span><span>${data.filter(e=>e.rules==='partial').length}</span></div>
+                    <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${data.length>0?data.filter(e=>e.rules==='partial').length/data.length*100:0}%;background:var(--yellow)"></div></div>
+                </div>
+                <div class="perf-bar-wrap">
+                    <div class="perf-bar-label"><span>❌ Broken</span><span>${data.filter(e=>e.rules==='no').length}</span></div>
+                    <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${data.length>0?data.filter(e=>e.rules==='no').length/data.length*100:0}%;background:var(--red)"></div></div>
+                </div>
+                <div style="margin-top:12px;font-size:.78rem;color:var(--t2)">
+                    Win rate when rules followed: <strong style="color:var(--green)">${(()=>{
+                        const rf=data.filter(e=>e.rules==='yes');
+                        return rf.length>0?(rf.filter(e=>e.outcome==='WIN').length/rf.length*100).toFixed(0):0;
+                    })()}%</strong><br>
+                    Win rate when rules broken: <strong style="color:var(--red)">${(()=>{
+                        const rb=data.filter(e=>e.rules==='no');
+                        return rb.length>0?(rb.filter(e=>e.outcome==='WIN').length/rb.length*100).toFixed(0):0;
+                    })()}%</strong>
+                </div>
+            </div>
+            <div>
+                <div style="font-size:.75rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Last 20 Sequences</div>
+                <div class="streak-dots">
+                    ${last20.slice().reverse().map(e=>`<div class="streak-dot ${e.outcome==='WIN'?'w':e.outcome==='LOSS'?'l':'b'}" title="${e.date}: ${e.outcome} ${e.rAchieved}R"></div>`).join('')}
+                </div>
+                <div style="margin-top:12px;font-size:.78rem;color:var(--t2)">
+                    🟢 = Win &nbsp; 🔴 = Loss &nbsp; 🟡 = B/E<br>
+                    Best win streak: <strong style="color:var(--green)">${maxWinStreak}</strong> &nbsp;
+                    Worst loss streak: <strong style="color:var(--red)">${maxLossStreak}</strong>
+                </div>
+            </div>
+        </div>`;
+}
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+function toast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════
+// ENTER KEY SUPPORT
+// ══════════════════════════════════════════════
+document.querySelectorAll('#page-calc input').forEach(inp => {
+    inp.addEventListener('keypress', e => { if(e.key==='Enter') runCalc(); });
+});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+updateCount();
+renderJournal();
+setTimeout(runCalc, 200);
+</script>
+</body>
+</html>
